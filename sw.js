@@ -1,5 +1,5 @@
-/* SuperNote service worker — offline app shell + fast loads */
-const CACHE = "supernote-v3";
+/* SuperNote service worker — network-first page, offline fallback, cached assets */
+const CACHE = "supernote-v5";
 const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
@@ -8,15 +8,23 @@ self.addEventListener("activate", e => {
   e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
 self.addEventListener("fetch", e => {
-  const url = new URL(e.request.url);
   if (e.request.method !== "GET") return;
-  if (url.origin === location.origin) {
-    // cache-first for our own app shell
+  const url = new URL(e.request.url);
+  if (url.origin !== location.origin) return; // let network handle fonts / supabase realtime
+  // Page navigations: network-first so the app is always up to date when online.
+  if (e.request.mode === "navigate") {
     e.respondWith(
-      caches.match(e.request).then(hit => hit || fetch(e.request).then(res => {
-        const copy = res.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); return res;
-      }).catch(() => caches.match("./index.html")))
+      fetch(e.request).then(res => {
+        const copy = res.clone(); caches.open(CACHE).then(c => c.put("./index.html", copy));
+        return res;
+      }).catch(() => caches.match("./index.html").then(r => r || caches.match("./")))
     );
+    return;
   }
-  // cross-origin (fonts, supabase realtime): let the network handle it
+  // Other same-origin assets (icons, manifest): cache-first for speed/offline.
+  e.respondWith(
+    caches.match(e.request).then(hit => hit || fetch(e.request).then(res => {
+      const copy = res.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); return res;
+    }))
+  );
 });
