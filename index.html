@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#efe8da">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="SuperNote">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
 <title>SuperNote ✦</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Nunito:wght@600;800;900&display=swap" rel="stylesheet">
@@ -213,6 +218,42 @@
   body.narrow #tools{display:none;}
   body.narrow #fab{right:20px;}
   body.narrow{--done-w:0px;}
+
+  /* ---------- polish ---------- */
+  .paper .grain{position:absolute;inset:0;border-radius:2px;pointer-events:none;mix-blend-mode:overlay;opacity:.5;
+    background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/></svg>");
+    background-size:120px 120px;}
+  .note.held .paper{transform:rotate(calc(var(--rot) * .35)) scale(1.045);}
+  @media (hover:hover){
+    .note:not(.held):hover{z-index:16;}
+    .note:not(.held):hover .paper{box-shadow:0 3px 5px rgba(0,0,0,.10),0 14px 26px rgba(0,0,0,.2);}
+    .note:not(.held):hover .paper::after{border-width:0 0 30px 30px;transition:border-width .18s;}
+  }
+  #empty{position:fixed;inset:0;z-index:8;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    pointer-events:none;gap:6px;text-align:center;transition:opacity .4s;}
+  #empty.hide{opacity:0;}
+  #empty .big{font-size:19px;font-weight:800;color:#a59d8a;}
+  #empty .sm{font-size:13px;font-weight:700;color:#bcb4a2;}
+  #empty .arrow{position:absolute;right:calc(var(--done-w) + 34px);bottom:96px;font-size:32px;color:#cfc6b2;animation:arrowb 1.6s ease-in-out infinite;}
+  body.narrow #empty .arrow{right:34px;}
+  @keyframes arrowb{50%{transform:translateY(9px);}}
+  .ripple{position:absolute;border:2px solid rgba(224,164,0,.55);border-radius:50%;pointer-events:none;z-index:5;
+    transform:translate(-50%,-50%);animation:rippleA .7s ease-out forwards;}
+  @keyframes rippleA{from{width:22px;height:22px;opacity:.8;}to{width:300px;height:300px;opacity:0;}}
+  .confetti{position:fixed;width:9px;height:14px;z-index:210;pointer-events:none;border-radius:2px;animation:conffall var(--cd,1s) linear forwards;}
+  @keyframes conffall{to{transform:translate(var(--cx),var(--cy)) rotate(var(--cr));opacity:0;}}
+  #shortcuts{position:fixed;inset:0;z-index:96;display:none;align-items:center;justify-content:center;background:rgba(40,36,28,.5);backdrop-filter:blur(6px);}
+  #shortcuts.open{display:flex;}
+  #shortcuts .box{background:#fff;border-radius:18px;padding:22px 26px;box-shadow:0 20px 60px rgba(0,0,0,.35);min-width:290px;}
+  #shortcuts h3{margin:0 0 14px;font-size:18px;font-weight:900;}
+  #shortcuts .k{display:flex;justify-content:space-between;gap:24px;padding:5px 0;font-weight:700;font-size:14px;color:#4a463d;}
+  #shortcuts kbd{background:#f0ebe1;border-radius:6px;padding:2px 8px;font-family:inherit;font-weight:800;font-size:12px;box-shadow:inset 0 -2px 0 rgba(0,0,0,.08);}
+  #installBtn{display:none;}
+  #installBtn.show{display:inline-flex;}
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:.001ms !important;transition-duration:.06s !important;}
+    #glow{animation:none;} .demoNote,#empty .arrow{animation:none;}
+  }
 </style>
 </head>
 <body>
@@ -239,6 +280,11 @@
 <div id="legend"><h5>COLOUR KEY — click to filter</h5><div id="legendRows"></div><div class="lall" id="legendAll">Show all colours</div></div>
 
 <div id="wall"></div>
+<div id="empty" class="hide">
+  <div class="big">Your wall is empty ✦</div>
+  <div class="sm">Tap&nbsp;<b>+</b>&nbsp;to write your first note — or press <b>N</b></div>
+  <div class="arrow">↘</div>
+</div>
 <div id="donePile"><h4>DONE <span class="dc" id="doneCount">0</span></h4></div>
 
 <div id="tools">
@@ -284,6 +330,19 @@
 
 <div id="qrOverlay"><div id="qrBox"><div id="qrcode"></div></div>
   <p>Scan with your phone (or open the link below) to put this wall on another device.</p><p id="qrUrl"></p></div>
+
+<div id="shortcuts"><div class="box">
+  <h3>Keyboard shortcuts</h3>
+  <div class="k"><span>New note</span><kbd>N</kbd></div>
+  <div class="k"><span>Search</span><kbd>/</kbd></div>
+  <div class="k"><span>Undo delete</span><kbd>Ctrl/⌘ Z</kbd></div>
+  <div class="k"><span>Add checkbox line</span><kbd>[ ]</kbd></div>
+  <div class="k"><span>Edit a note</span><kbd>double-click</kbd></div>
+  <div class="k"><span>Note menu</span><kbd>right-click</kbd></div>
+  <div class="k"><span>New note at spot</span><kbd>double-click wall</kbd></div>
+  <div class="k"><span>This help</span><kbd>?</kbd></div>
+  <div class="k"><span>Close anything</span><kbd>Esc</kbd></div>
+</div></div>
 
 <div id="toast"></div>
 
@@ -362,6 +421,18 @@ function chime(){ const c=ac();if(!c)return;const t=c.currentTime;[880,1320,1760
 let toastT=null;
 function toast(m){ const t=$("toast");t.textContent=m;t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),2800); }
 
+/* ===== feel: haptics / confetti / ripple / empty-state ===== */
+const REDUCE=matchMedia("(prefers-reduced-motion: reduce)").matches;
+function haptic(ms){ try{ if(TOUCH&&navigator.vibrate)navigator.vibrate(ms); }catch(e){} }
+function confetti(x,y){ if(REDUCE)return; const cols=["#ffd44d","#ff9d5c","#33c46a","#a4d0f7","#f9a8c0","#e0a400"];
+  for(let i=0;i<24;i++){ const c=document.createElement("div");c.className="confetti";c.style.left=x+"px";c.style.top=y+"px";c.style.background=cols[i%cols.length];
+    const a=Math.random()*Math.PI*2,d=90+Math.random()*170;c.style.setProperty("--cx",Math.cos(a)*d+"px");c.style.setProperty("--cy",(Math.sin(a)*d+140)+"px");
+    c.style.setProperty("--cr",(Math.random()*720-360)+"deg");c.style.setProperty("--cd",(0.9+Math.random()*0.6)+"s");
+    document.body.appendChild(c);setTimeout(()=>c.remove(),1700);} }
+function ripple(x,y){ if(REDUCE)return; const r=document.createElement("div");r.className="ripple";r.style.left=x+"px";r.style.top=y+"px";wallEl.appendChild(r);setTimeout(()=>r.remove(),750); }
+function checklistState(n){ let total=0,done=0; (n.text||"").split("\n").forEach(l=>{const m=l.match(/^\s*\[( |x|X)\]/);if(m){total++;if(m[1]!==" ")done++;}}); return {total,done}; }
+function updateEmpty(){ if(!S)return; $("empty").classList.toggle("hide", curNotes().length>0); }
+
 /* ===== stroke rendering ===== */
 function drawStrokes(canvas,strokes,size){ const dpr=window.devicePixelRatio||1;canvas.width=size*dpr;canvas.height=size*dpr;
   const ctx=canvas.getContext("2d");ctx.scale(dpr,dpr);ctx.lineCap="round";ctx.lineJoin="round";ctx.strokeStyle="#2b2b33";
@@ -383,14 +454,21 @@ function renderNoteText(container,n){
   });
 }
 function toggleCheck(n,idx){ const lines=(n.text||"").split("\n"); const m=lines[idx].match(/^(\s*)\[( |x|X)\](.*)$/);
-  if(!m)return; lines[idx]=m[1]+"["+(m[2]===" "?"x":" ")+"]"+m[3]; n.text=lines.join("\n");
-  const el=noteEls.get(n.id); if(el)renderNoteText(el.querySelector(".ntext"),n); pop(); save(); }
+  if(!m)return; const before=checklistState(n);
+  lines[idx]=m[1]+"["+(m[2]===" "?"x":" ")+"]"+m[3]; n.text=lines.join("\n");
+  const el=noteEls.get(n.id); if(el)renderNoteText(el.querySelector(".ntext"),n); pop(); haptic(8); save();
+  const after=checklistState(n);
+  if(after.total>1 && after.done===after.total && before.done<before.total){
+    const bb=el?el.getBoundingClientRect():{left:innerWidth/2,top:innerHeight/2,width:0,height:0};
+    confetti(bb.left+bb.width/2, bb.top+bb.height/2); chime(); haptic([12,40,12]);
+  } }
 
 /* ===== note element ===== */
 function makeNoteEl(n){
   const el=document.createElement("div"); el.className="note"+(n.done?" done":"");
   const paper=document.createElement("div"); paper.className="paper";
   paper.style.setProperty("--c1",PALETTE[n.color][0]); paper.style.setProperty("--c2",PALETTE[n.color][1]); paper.style.setProperty("--rot",n.rot+"deg");
+  const grain=document.createElement("div"); grain.className="grain"; paper.appendChild(grain);
   const txt=document.createElement("div"); txt.className="ntext";
   const cv=document.createElement("canvas");
   paper.appendChild(txt); paper.appendChild(cv); el.appendChild(paper); wallEl.appendChild(el);
@@ -476,12 +554,12 @@ function makeInteractive(el,n){
 }
 function setDone(n,done){ n.done=done;const el=noteEls.get(n.id);
   if(el){ el.classList.toggle("done",done);drawStrokes(el.querySelector("canvas"),n.strokes,done?DONE_SIZE:NOTE_SIZE);renderNoteText(el.querySelector(".ntext"),n); }
-  layoutDonePile();updateCounts(); }
+  haptic(done?[8,30,8]:8); layoutDonePile();updateCounts(); }
 
 function flingNote(el,n,vx,vy){ if(peers===0){ el.style.transition="left .5s cubic-bezier(.2,1.7,.4,1), top .5s cubic-bezier(.2,1.7,.4,1)";
     el.style.left=n.x+"px";el.style.top=n.y+"px";setTimeout(()=>el.style.transition="",520);toast("No other device in this room yet — tap ⧉ to pair");return; }
   const sp=Math.hypot(vx,vy),dir={x:vx/sp,y:vy/sp};
-  send("push",{note:{...n,done:false},dir,targetPage:S.active,pageName:pageById(S.active).name}); whoosh();
+  send("push",{note:{...n,done:false},dir,targetPage:S.active,pageName:pageById(S.active).name}); whoosh(); haptic(15);
   S.notes[S.active]=curNotes().filter(x=>x.id!==n.id); save();
   animateOut(el,vx,vy,()=>{el.remove();noteEls.delete(n.id);layoutDonePile();updateCounts();}); }
 function animateOut(el,vx,vy,done){ let x=parseFloat(el.style.left),y=parseFloat(el.style.top),last=performance.now(),rot=0;const paper=el.querySelector(".paper");
@@ -502,7 +580,7 @@ function receiveNote(payload){ const n=payload.note,dir=payload.dir||{x:0,y:-1},
   const el=makeNoteEl(n);el.style.left=ex+"px";el.style.top=ey+"px";const paper=el.querySelector(".paper");const startRot=n.rot+(dir.x>=0?26:-26);
   const t0=performance.now(),dur=760;(function fly(now){const p=Math.min(1,(now-t0)/dur),e=1-Math.pow(1-p,4);
     el.style.left=(ex+(n.x-ex)*e)+"px";el.style.top=(ey+(n.y-ey)*e)+"px";paper.style.setProperty("--rot",(startRot+(n.rot-startRot)*e)+"deg");
-    if(p<1)requestAnimationFrame(fly);else{paper.style.setProperty("--rot",n.rot+"deg");paper.classList.add("settle");setTimeout(()=>paper.classList.remove("settle"),600);thwap();sparkle(n.x+NOTE_SIZE/2,n.y+NOTE_SIZE/2);updateCounts();}})(t0); }
+    if(p<1)requestAnimationFrame(fly);else{paper.style.setProperty("--rot",n.rot+"deg");paper.classList.add("settle");setTimeout(()=>paper.classList.remove("settle"),600);thwap();haptic(18);sparkle(n.x+NOTE_SIZE/2,n.y+NOTE_SIZE/2);ripple(n.x+NOTE_SIZE/2,n.y+NOTE_SIZE/2);updateCounts();}})(t0); }
 function sparkle(x,y){ for(let i=0;i<7;i++){const s=document.createElement("div");s.className="spark";const a=Math.random()*Math.PI*2,r=30+Math.random()*45;
   s.style.left=x+"px";s.style.top=y+"px";s.style.setProperty("--sx",Math.cos(a)*r+"px");s.style.setProperty("--sy",Math.sin(a)*r+"px");
   if(i%2)s.style.background="#ff9d5c";wallEl.appendChild(s);setTimeout(()=>s.remove(),650);} }
@@ -573,7 +651,7 @@ function removePage(p){ if(S.pages.length<=1){toast("Keep at least one page");re
   if(S.active===p.id)S.active=S.pages[0].id;save();renderPage();broadcastPages(); }
 
 function updateCounts(){ document.querySelectorAll(".tab").forEach(t=>{const c=t.querySelector(".cnt");if(c)c.textContent=(S.notes[t.dataset.id]||[]).length;});
-  $("binCount").textContent=S.bin.length;$("doneCount").textContent=curNotes().filter(n=>n.done).length;save(); }
+  $("binCount").textContent=S.bin.length;$("doneCount").textContent=curNotes().filter(n=>n.done).length;updateEmpty();save(); }
 
 /* ===== bin ===== */
 function binPush(n,pid){ S.bin.unshift({note:n,page:pid,at:Date.now()}); if(S.bin.length>BIN_MAX)S.bin.pop(); }
@@ -731,9 +809,10 @@ wallEl.addEventListener("contextmenu",e=>{ if(e.target!==wallEl)return;e.prevent
 
 document.addEventListener("keydown",e=>{ if($("join").style.display!=="none")return;
   const typing=document.activeElement===ctext||document.activeElement===$("roomIn")||document.activeElement===$("searchIn")||(document.activeElement&&document.activeElement.classList&&document.activeElement.classList.contains("li"));
-  if(e.key==="Escape"){closeComposer();closeCtx();$("binDrawer").classList.remove("open");$("qrOverlay").classList.remove("open");$("legend").classList.remove("open");$("legendBtn").classList.remove("on");return;}
+  if(e.key==="Escape"){closeComposer();closeCtx();$("binDrawer").classList.remove("open");$("qrOverlay").classList.remove("open");$("legend").classList.remove("open");$("legendBtn").classList.remove("on");$("shortcuts").classList.remove("open");return;}
   if(typing)return;
   if(e.key==="/"){e.preventDefault();$("searchBtn").click();}
+  else if(e.key==="?"){e.preventDefault();$("shortcuts").classList.toggle("open");}
   else if(e.key==="n"||e.key==="N"){openComposer(null);}
   else if((e.ctrlKey||e.metaKey)&&e.key==="z"){if(S.bin.length)restoreBin(0);} });
 
@@ -753,6 +832,20 @@ function enter(r){ room=r.trim().toLowerCase().replace(/[^a-z0-9-]/g,"-").replac
 $("goBtn").onclick=()=>enter($("roomIn").value);
 $("roomIn").addEventListener("keydown",e=>{if(e.key==="Enter")enter($("roomIn").value);});
 window.addEventListener("resize",()=>{ if(!room)return;applyResponsive();if($("composer").classList.contains("open"))sizeDrawCanvas();layoutDonePile();$("tools").style.display=document.body.classList.contains("narrow")?"none":"flex"; });
+
+$("shortcuts").onclick=e=>{ if(e.target===$("shortcuts"))$("shortcuts").classList.remove("open"); };
+
+/* ===== PWA: installable + offline (hosted only) ===== */
+if("serviceWorker" in navigator && location.protocol.startsWith("http")){
+  window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+}
+let deferredInstall=null;
+window.addEventListener("beforeinstallprompt",e=>{ e.preventDefault(); deferredInstall=e; showInstallChip(); });
+function showInstallChip(){ if(document.getElementById("installChip"))return; const b=document.createElement("button");
+  b.id="installChip";b.className="chip btn";b.textContent="⬇ Install";b.title="Install SuperNote as an app";
+  b.onclick=async()=>{ if(!deferredInstall)return; deferredInstall.prompt(); try{await deferredInstall.userChoice;}catch(e){} deferredInstall=null; b.remove(); };
+  const bar=$("bar"); if(bar) bar.insertBefore(b, $("pairBtn")); }
+window.addEventListener("appinstalled",()=>{ const c=document.getElementById("installChip"); if(c)c.remove(); toast("SuperNote installed ✦"); });
 
 (function init(){ const p=new URLSearchParams(location.search);const r=(p.get("room")||"").trim();$("roomIn").value=r||suggestRoom();if(r)enter(r); })();
 </script>
